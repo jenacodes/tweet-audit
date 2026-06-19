@@ -3,10 +3,9 @@ package com.mycompany.tweet.audit;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycompany.tweet.audit.model.Content;
-import com.mycompany.tweet.audit.model.GeminiRequest;
-import com.mycompany.tweet.audit.model.Part;
-import com.mycompany.tweet.audit.model.TweetWrapper;
+import com.mycompany.tweet.audit.config.CriteriaLoader;
+import com.mycompany.tweet.audit.model.*;
+
 import java.io.File;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -51,17 +50,23 @@ public class TweetAudit {
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
             //JSON to java Object
-            List<TweetWrapper> tweet = objectMapper.readValue(new File("real_tweets.json"), new TypeReference<List<TweetWrapper>>() {
+            List<TweetWrapper> tweet = objectMapper.readValue(new File("real_tweets.json"), new TypeReference<>() {
             });
 
             //Splitting to batches
             List<List<TweetWrapper>> batches = splitWithLoop(tweet, 50);
 
+
+
+            //Loop through each batch, send to Gemini and handle response
             for (List<TweetWrapper> batch : batches) {
-                //create new stringbuilder object
+
+                //create new stringBuilder object to construct prompt text
                 StringBuilder sb = new StringBuilder();
+                String rules = CriteriaLoader.loadCriteria();
+                sb.append(rules);
+
                 for (TweetWrapper wrapper : batch) {
-//                    System.out.println(wrapper.tweet().fullText());
 
                     String id = wrapper.tweet().id();
                     String fullText = wrapper.tweet().fullText();
@@ -70,53 +75,71 @@ public class TweetAudit {
                     sb.append("Full Text ").append(fullText).append("\n");
 
                 }
-//                System.out.println(sb.toString());
+                //create GeminiRequest object with the constructed prompt text
                     Part part = new Part(sb.toString());
                     Content content = new Content(List.of(part));
                     GeminiRequest geminiRequest = new GeminiRequest(List.of(content));
 
-
+                    //Serialize to JSON
                 String jsonString = objectMapper.writeValueAsString(geminiRequest);
-
-
 
                 String geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + myEnvValue;
 
-                HttpClient client = HttpClient.newHttpClient();
-                HttpRequest request = HttpRequest.newBuilder()
-                        .POST(HttpRequest.BodyPublishers.ofString(jsonString))
-                        .header("accept", "application/json")
-                        .header("Content-Type", "application/json")
-                        .uri(URI.create(geminiUrl))
-                        .build();
 
-
-
-  HttpResponse <String> response =   client.send(request, HttpResponse.BodyHandlers.ofString());
-
-//
-                System.out.println(response.body());
+                //Send the HTTp request
+                HttpResponse<String> response;
+                try (HttpClient client = HttpClient.newHttpClient()) {
+                    HttpRequest request = HttpRequest.newBuilder()
+                            .POST(HttpRequest.BodyPublishers.ofString(jsonString))
+                            .header("accept", "application/json")
+                            .header("Content-Type", "application/json")
+                            .uri(URI.create(geminiUrl))
+                            .build();
+                    response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                }
 
                 // Parse JSON into a tree of JsonNode
                 JsonNode rootNode = objectMapper.readTree(response.body());
 
-                // Access simple properties
-                String name = rootNode.path("candidates")
+                //Error logging
+                if (rootNode.has("error")){
+                    String errorMessage = rootNode.path("error").path("message").asText();
+                    System.err.println("Google API failed: "+ errorMessage);
+                    continue;
+                }
+
+                // Extract AI response
+                String rawAiText = rootNode.path("candidates")
                                         .get(0)
                                         .path("content")
                                         .path("parts")
                                          .get(0)
                                         .path("text").asText();
 
-                System.out.println(name);
+                String cleanJson = rawAiText.replace("```json", "").replace("```", "");
+
+                List<AuditResult> results = objectMapper.readValue(cleanJson, new TypeReference<>() {});
+
+                for (AuditResult result : results ){
+                    System.out.println(result.reason());
+                }
+
+
+                // Give Google's servers time to breathe before the next batch
+                try {
+                    System.out.println("Batch complete. Sleeping for 5 seconds to avoid API rate limits...");
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    System.err.println("Sleep interrupted: " + e.getMessage());
+                }
 
                 break;
+
 
 
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+        System.err.println("An error occurred: " + e.getMessage());}
         }
-    }
 }

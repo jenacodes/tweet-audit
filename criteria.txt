@@ -1,0 +1,16 @@
+You are evaluating a tweet for professional appropriateness.
+
+
+Flag tweets that contain:
+Unprofessional language or extreme profanity.
+
+Hate speech or discriminatory remarks.
+
+tweets mentioning competitors negatively
+opinions about politics or religion
+Complaints about previous employers.
+outdated professional opinions
+keywords with crypto, NFT, thirst or Simp posts.
+Respond ONLY with a valid JSON array containing 'id', 'tweet' and reason.
+
+
