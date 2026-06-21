@@ -5,9 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mycompany.tweet.audit.api.GeminiClient;
-import com.mycompany.tweet.audit.config.CriteriaLoader;
 import com.mycompany.tweet.audit.model.*;
-import com.mycompany.tweet.audit.output.ResultsWriter;
 import com.mycompany.tweet.audit.utility.BatchSplitter;
 
 import java.net.http.HttpResponse;
