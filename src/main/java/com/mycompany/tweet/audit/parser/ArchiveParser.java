@@ -10,10 +10,9 @@ import java.util.List;
 
 public class ArchiveParser {
 
-    public static List<TweetWrapper>parse(String filePath){
+    public static List<TweetWrapper> parse(String filePath){
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-
             // ignore any JSON fields that aren't in our Records
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 

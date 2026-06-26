@@ -1,28 +1,23 @@
 package com.mycompany.tweet.audit.evaluator;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycompany.tweet.audit.api.GeminiClient;
+import com.mycompany.tweet.audit.api.ResilientGeminiClient;
 import com.mycompany.tweet.audit.model.*;
+import com.mycompany.tweet.audit.output.ResultsWriter;
 import com.mycompany.tweet.audit.utility.BatchSplitter;
-
-import java.net.http.HttpResponse;
-import java.util.ArrayList;
+//import java.util.ArrayList;
 import java.util.List;
 
 public class TweetEvaluator {
-    public static List<AuditResult>evaluateAll(List<TweetWrapper> tweets, String criteria, String myEnvValue) throws JsonProcessingException {
-    List<AuditResult> masterList = new ArrayList<>();
+    public static void evaluateAll(List<TweetWrapper> tweets, String criteria, String geminiModel, String myEnvValue, String myUsername, int batchSize) throws JsonProcessingException, InterruptedException {
+//    List<AuditResult> masterList = new ArrayList<>();
         ObjectMapper objectMapper = new ObjectMapper();
 
         //Splitting to batches
-        List<List<TweetWrapper>> batches = BatchSplitter.splitWithLoop(tweets, 50);
+        List<List<TweetWrapper>> batches = BatchSplitter.splitWithLoop(tweets, batchSize);
 
         //Loop through each batch, send to Gemini and handle response
         for (List<TweetWrapper> batch : batches) {
-
             //create new stringBuilder object to construct prompt text
             StringBuilder sb = new StringBuilder();
             sb.append(criteria);
@@ -34,7 +29,6 @@ public class TweetEvaluator {
 
                 sb.append("ID: ").append(id).append("\n");
                 sb.append("Full Text ").append(fullText).append("\n");
-
             }
 
             //create GeminiRequest object with the constructed prompt text
@@ -45,56 +39,32 @@ public class TweetEvaluator {
             //Serialize to JSON
             String jsonString = objectMapper.writeValueAsString(geminiRequest);
 
-
-            //Send the HTTp request
-            HttpResponse<String> response = GeminiClient.sendRequest(jsonString, myEnvValue);
-
-            // Parse JSON into a tree of JsonNode
-            assert response != null;
-            JsonNode rootNode = objectMapper.readTree(response.body());
-
-            //Error logging
-            if (rootNode.has("error")){
-                String errorMessage = rootNode.path("error").path("message").asText();
-                System.err.println("Google API failed: "+ errorMessage);
-                continue;
-            }
-            // Extract AI response
-            String rawAiText = rootNode.path("candidates")
-                    .get(0)
-                    .path("content")
-                    .path("parts")
-                    .get(0)
-                    .path("text").asText();
-
-            String cleanJson = rawAiText.replace("```json", "").replace("```", "");
-
-
-            //Deserialize cleaned JSON into List of AuditResult objects
-            List<AuditResult> results = objectMapper.readValue(cleanJson, new TypeReference<>() {});
+            //Send the request to Gemini and get the results with retry logic. It handles the API call, retries, and JSON parsing.
+           List<AuditResult> results = ResilientGeminiClient.executeWithRetry(jsonString, myEnvValue, geminiModel);
 
             for (AuditResult result : results ){
                 System.out.println(result.reason());
             }
 
-            masterList.addAll(results);
+            //Add new batch to masterList
+//            masterList.addAll(results);
 
+            // This rewrites the CSV file with the updated masterList after every successful batch
+            try {
+                System.out.println("Auto-saving progress to CSV...");
+                ResultsWriter.writeToCsv(results, myUsername);
+            } catch (Exception e) {
+                System.err.println("Failed to auto-save CSV: " + e.getMessage());
+            }
 
             // Give Google's servers time to breathe before the next batch(Rate-limiting)
             try {
-                System.out.println("Batch complete. Sleeping for 5 seconds to avoid API rate limits...");
-                Thread.sleep(5000);
+                System.out.println("Batch complete. Sleeping for 15 seconds to avoid API rate limits...");
+                Thread.sleep(15000);
             } catch (InterruptedException e) {
                 System.err.println("Sleep interrupted: " + e.getMessage());
             }
-
             break;
-
-
-
         }
-
-
-        return masterList;
     }
 }

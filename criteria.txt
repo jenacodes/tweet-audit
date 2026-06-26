@@ -12,5 +12,6 @@ Complaints about previous employers.
 outdated professional opinions
 keywords with crypto, NFT, thirst or Simp posts.
 Respond ONLY with a valid JSON array containing 'id', 'tweet' and reason.
+The reason should not be more than 15 words.
 
 
