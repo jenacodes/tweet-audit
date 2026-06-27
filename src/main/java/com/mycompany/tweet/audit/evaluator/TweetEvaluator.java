@@ -44,7 +44,7 @@ public class TweetEvaluator {
                 System.out.println(result.reason());
             }
 
-            // This rewrites the CSV file with the updated masterList after every successful batch
+            // Auto-save the results to CSV after each batch is processed. This ensures that even if the program is interrupted, progress is saved.
             try {
                 System.out.println("Auto-saving progress to CSV...");
                 ResultsWriter.writeToCsv(results, myUsername);
