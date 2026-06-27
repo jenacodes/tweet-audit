@@ -5,12 +5,10 @@ import com.mycompany.tweet.audit.api.ResilientGeminiClient;
 import com.mycompany.tweet.audit.model.*;
 import com.mycompany.tweet.audit.output.ResultsWriter;
 import com.mycompany.tweet.audit.utility.BatchSplitter;
-//import java.util.ArrayList;
 import java.util.List;
 
 public class TweetEvaluator {
     public static void evaluateAll(List<TweetWrapper> tweets, String criteria, String geminiModel, String myEnvValue, String myUsername, int batchSize) throws JsonProcessingException, InterruptedException {
-//    List<AuditResult> masterList = new ArrayList<>();
         ObjectMapper objectMapper = new ObjectMapper();
 
         //Splitting to batches
@@ -46,9 +44,6 @@ public class TweetEvaluator {
                 System.out.println(result.reason());
             }
 
-            //Add new batch to masterList
-//            masterList.addAll(results);
-
             // This rewrites the CSV file with the updated masterList after every successful batch
             try {
                 System.out.println("Auto-saving progress to CSV...");
@@ -64,7 +59,6 @@ public class TweetEvaluator {
             } catch (InterruptedException e) {
                 System.err.println("Sleep interrupted: " + e.getMessage());
             }
-            break;
         }
     }
 }
