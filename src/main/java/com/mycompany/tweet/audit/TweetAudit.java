@@ -12,7 +12,7 @@ public class TweetAudit {
         System.out.println("Tweet audit starting...");
 
         Dotenv dotenv = Dotenv.load();
-        String myEnvValue = dotenv.get("GEMINI_API_KEY").trim();
+        String apiKey = dotenv.get("GEMINI_API_KEY").trim();
         String myUsername = dotenv.get("X_USERNAME").trim();
         String criteria = CriteriaLoader.loadCriteria();
         String geminiModel = dotenv.get("GEMINI_MODEL");
@@ -22,8 +22,8 @@ public class TweetAudit {
             geminiModel = "gemini-2.5-flash";
         }
 
-        //if BATCH_SIZE is set in the .env file, use that value. Otherwise, default to 50.
-        int batchSize = 50;
+        //if BATCH_SIZE is set in the .env file, use that value. Otherwise, default to 10.
+        int batchSize = 10;
         String envBatchSize = dotenv.get("BATCH_SIZE");
         if (envBatchSize != null && !envBatchSize.isBlank()) {
             try {
@@ -34,21 +34,23 @@ public class TweetAudit {
         }
 
         try {
-            //Parse the tweet archive JSON into a list of TweetWrapper objects
-            List<TweetWrapper>tweets = ArchiveParser.parse("real_tweets.json");
+            //Parse the tweet archive JSON into a list of Tweet objects
+            List<Tweet>tweets = ArchiveParser.parse("real_tweets.json");
 
-            if (tweets == null || tweets.isEmpty()) {
+            if (tweets.isEmpty()) {
                 System.err.println("No tweets found in the archive. Exiting.");
                 return;
             }
+
             System.out.println("Total tweets to evaluate: " + tweets.size());
 
             //Evaluate all tweets and get the results and save the results to the CSV file after each batch is processed. This ensures that even if the program is interrupted, progress is saved.
-            TweetEvaluator.evaluateAll(tweets, criteria, geminiModel, myEnvValue, myUsername, batchSize);
+            TweetEvaluator.evaluateAll(tweets, criteria, geminiModel, apiKey, myUsername, batchSize);
 
             System.out.println("Audit complete! All tweets saved successfully.");
 
         } catch (Exception e) {
-        System.err.println("An error occurred: " + e.getMessage());}
+        System.err.println("An error occurred: " + e.getMessage());
         }
+    }
 }

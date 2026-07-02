@@ -1,5 +1,4 @@
 package com.mycompany.tweet.audit.evaluator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mycompany.tweet.audit.api.ResilientGeminiClient;
 import com.mycompany.tweet.audit.model.*;
@@ -8,23 +7,23 @@ import com.mycompany.tweet.audit.utility.BatchSplitter;
 import java.util.List;
 
 public class TweetEvaluator {
-    public static void evaluateAll(List<TweetWrapper> tweets, String criteria, String geminiModel, String myEnvValue, String myUsername, int batchSize) throws JsonProcessingException, InterruptedException {
-        ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    public static void evaluateAll(List<Tweet> tweets, String criteria, String geminiModel, String apiKey, String myUsername, int batchSize) throws Exception {
 
         //Splitting to batches
-        List<List<TweetWrapper>> batches = BatchSplitter.splitWithLoop(tweets, batchSize);
+        List<List<Tweet>> batches = BatchSplitter.splitWithLoop(tweets, batchSize);
 
         //Loop through each batch, send to Gemini and handle response
-        for (List<TweetWrapper> batch : batches) {
+        for (List<Tweet> batch : batches) {
             //create new stringBuilder object to construct prompt text
             StringBuilder sb = new StringBuilder();
             sb.append(criteria);
 
-            for (TweetWrapper wrapper : batch) {
-
-                String id = wrapper.tweet().id();
-                String fullText = wrapper.tweet().fullText();
-
+            //Loop through each tweet in the batch and append its ID and full text to the prompt
+            for (Tweet tweet : batch) {
+                String id = tweet.id();
+                String fullText = tweet.fullText();
                 sb.append("ID: ").append(id).append("\n");
                 sb.append("Full Text ").append(fullText).append("\n");
             }
@@ -37,19 +36,33 @@ public class TweetEvaluator {
             //Serialize to JSON
             String jsonString = objectMapper.writeValueAsString(geminiRequest);
 
-            //Send the request to Gemini and get the results with retry logic. It handles the API call, retries, and JSON parsing.
-           List<AuditResult> results = ResilientGeminiClient.executeWithRetry(jsonString, myEnvValue, geminiModel);
 
-            for (AuditResult result : results ){
-                System.out.println(result.reason());
+            List<AuditResult> results;
+
+            try{
+                //Send the request to Gemini and get the results
+                results = ResilientGeminiClient.executeWithRetry(jsonString, apiKey, geminiModel);
+            } catch (Exception e) {
+                System.err.println("FATAL: Batch evaluation failed. Aborting.");
+                System.err.println("Error: " + e.getMessage());
+                System.err.println("Checkpoint: Previous batches have been saved to output.csv. Please check the file for progress");
+                System.err.println("Next run will process from this batch onward.");
+                return; //Exit the method - stop processing
             }
 
+            if (results!= null && !results.isEmpty()){
+                for (AuditResult result : results ){
+                    System.out.println(result.reason());
+                }
+
+            }
             // Auto-save the results to CSV after each batch is processed. This ensures that even if the program is interrupted, progress is saved.
             try {
                 System.out.println("Auto-saving progress to CSV...");
                 ResultsWriter.writeToCsv(results, myUsername);
             } catch (Exception e) {
                 System.err.println("Failed to auto-save CSV: " + e.getMessage());
+                return; //Stop if we can't save
             }
 
             // Give Google's servers time to breathe before the next batch(Rate-limiting)
@@ -58,6 +71,7 @@ public class TweetEvaluator {
                 Thread.sleep(15000);
             } catch (InterruptedException e) {
                 System.err.println("Sleep interrupted: " + e.getMessage());
+                return;
             }
         }
     }
