@@ -24,8 +24,6 @@ public class GeminiClient {
                     .build();
             return client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (Exception e){
-//            System.err.println("Error sending request to Gemini API: " + e.getMessage());
-//            return null;
             throw new Exception("Network error or API unreachable: " + e.getMessage(), e);
         }
     }
