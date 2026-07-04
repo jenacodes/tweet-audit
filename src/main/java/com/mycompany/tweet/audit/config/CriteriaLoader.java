@@ -7,7 +7,7 @@ import java.nio.file.Path;
 public class CriteriaLoader {
 
     public static String loadCriteria(){
-        Path filePath  = Path.of("criteria.txt");
+        Path filePath  = Path.of("resources/criteria.txt");
 
         String content = "";
         try {
