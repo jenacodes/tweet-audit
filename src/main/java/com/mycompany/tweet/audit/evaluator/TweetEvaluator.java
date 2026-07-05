@@ -4,12 +4,21 @@ import com.mycompany.tweet.audit.api.ResilientGeminiClient;
 import com.mycompany.tweet.audit.model.*;
 import com.mycompany.tweet.audit.output.ResultsWriter;
 import com.mycompany.tweet.audit.utility.BatchSplitter;
+import com.mycompany.tweet.audit.utility.CheckpointManager;
 import java.util.List;
 
 public class TweetEvaluator {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static void evaluateAll(List<Tweet> tweets, String criteria, String geminiModel, String apiKey, String myUsername, int batchSize) throws Exception {
+
+        // Load the checkpoint and slice the list before we do any batching
+        String lastProcessedId = CheckpointManager.loadCheckpoint();
+        tweets = CheckpointManager.applyCheckpoint(tweets, lastProcessedId);
+
+        if (tweets.isEmpty()) {
+            return; // Exit early if the checkpoint was the very last tweet in the file
+        }
 
         //Splitting to batches
         List<List<Tweet>> batches = BatchSplitter.splitWithLoop(tweets, batchSize);
@@ -60,6 +69,12 @@ public class TweetEvaluator {
             try {
                 System.out.println("Auto-saving progress to CSV...");
                 ResultsWriter.writeToCsv(results, myUsername);
+
+                Tweet lastTweetInBatch = batch.getLast();
+
+                CheckpointManager.saveCheckpoint(lastTweetInBatch.id());
+                System.out.println("Checkpoint Saved: " + lastTweetInBatch.id());
+
             } catch (Exception e) {
                 System.err.println("Failed to auto-save CSV: " + e.getMessage());
                 return; //Stop if we can't save
@@ -73,6 +88,8 @@ public class TweetEvaluator {
                 System.err.println("Sleep interrupted: " + e.getMessage());
                 return;
             }
+            break;
         }
+
     }
 }
