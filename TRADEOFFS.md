@@ -18,7 +18,8 @@ For network errors, I built this as cynical software—which means expecting bad
 
 ## Concurrency & Performance
 
-This tool is built to execute task in batches sequentially on a single thread. Sending each tweets sequentially would be slow and sending all at once(Multithreading) which is faster but risks rate limits errors and API quota exhaustion. Sending tweets in batches sequentially is the sweet spot. Furthermore, staying single-threaded is significantly easier to debug and reduces architectural overhead.
+This tool is built to execute task in batches sequentially on a single thread. Sending each tweets sequentially would be slow and sending all at once(Multithreading) which is faster but risks rate limits errors and API quota exhaustion. Sending tweets in batches sequentially is the sweet spot.
+Increasing the batchSize can increase throughput but can also increase the risk of the AI hallucinating and returning false positives. Furthermore, Staying single-threaded is significantly easier to debug and reduces architectural overhead.
 
 ## Resilience: Checkpointing Mechanism
 
