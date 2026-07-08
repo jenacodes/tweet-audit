@@ -41,6 +41,7 @@ public class ConfigLoader {
                 }
             }
 
+            //Check if the error is not empty
             if (!errors.isEmpty()){
                 throw new Exception(errors.toString());
             }else {
