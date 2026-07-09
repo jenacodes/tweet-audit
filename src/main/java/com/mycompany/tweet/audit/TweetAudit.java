@@ -11,34 +11,47 @@ public class TweetAudit {
 
         System.out.println("Tweet audit starting...");
 
+        Config config;
+        String criteria;
+        List<Tweet> tweets;
 
+        //Load config
         try {
-            //Load all variables from the .env file
-            Config config = ConfigLoader.load();
-            String apiKey = config.apiKey();
-            String myUsername = config.myUsername();
-            String geminiModel = config.geminiModel();
-            int batchSize = config.batchSize();
-
-
-            String criteria = CriteriaLoader.loadCriteria();
-            //Parse the tweet archive JSON into a list of Tweet objects
-            List<Tweet>tweets = ArchiveParser.parse("real_tweets.json");
-
-            if (tweets.isEmpty()) {
-                System.err.println("No tweets found in the archive. Exiting.");
-                return;
-            }
-
-            System.out.println("Total tweets to evaluate: " + tweets.size());
-
-            //Evaluate all tweets and get the results and save the results to the CSV file after each batch is processed. This ensures that even if the program is interrupted, progress is saved.
-            TweetEvaluator.evaluateAll(tweets, criteria, geminiModel, apiKey, myUsername, batchSize);
-
-            System.out.println("Audit complete! All tweets saved successfully.");
-
+            config = ConfigLoader.load();
         } catch (Exception e) {
-        System.err.println("An error occurred: " + e.getMessage());
+            System.err.println("Configuration error: " + e.getMessage());
+            return;
         }
+
+        //Load criteria
+        try {
+            criteria = CriteriaLoader.loadCriteria();
+        } catch (Exception e) {
+            System.err.println("Criteria loading Error: " + e.getMessage());
+            return;
+        }
+
+        //Parse archive
+        try {
+            tweets = ArchiveParser.parse("real_tweets.json");
+        } catch (Exception e) {
+            System.err.println("Archive parsing error: "+ e.getMessage());
+            return;
+        }
+
+        if (tweets.isEmpty()){
+            System.err.println("No tweets found in the archive. Exiting.");
+            return;
+        }
+
+        System.out.println("Total tweets to evaluate: " + tweets.size());
+
+        //Evaluate
+        try {
+            TweetEvaluator.evaluateAll(tweets, criteria, config.geminiModel(), config.apiKey(), config.myUsername(), config.batchSize());
+        } catch (Exception e) {
+            System.err.println("Evaluation error: " + e.getMessage());
+        }
+        System.out.println("Audit complete! All tweets saved successfully.");
     }
 }
