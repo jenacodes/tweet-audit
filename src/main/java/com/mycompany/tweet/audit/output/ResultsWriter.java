@@ -8,9 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 public class ResultsWriter {
-    public static void writeToCsv(List<AuditResult>flaggedTweets, String myUsername) throws IOException {
-        String fileName = "output/output.csv";
-        Path path = Path.of(fileName);
+    public static void writeToCsv(List<AuditResult>flaggedTweets, String myUsername, String filePath) throws IOException {
+        Path path = Path.of(filePath);
 
         // Create the output directory if it doesn't exist
             Files.createDirectories(path.getParent());
@@ -18,7 +17,7 @@ public class ResultsWriter {
         // Check if the file already exists before we open it
         boolean fileExists = Files.exists(path);
 
-        try (PrintWriter writer =new PrintWriter(new FileWriter(fileName, true))) {
+        try (PrintWriter writer =new PrintWriter(new FileWriter(filePath, true))) {
           // Only print the header if this is a brand-new file
             if (!fileExists) {
                 writer.println("Tweet ID,Tweet,Reason,URL");

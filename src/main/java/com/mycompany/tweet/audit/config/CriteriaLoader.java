@@ -1,20 +1,17 @@
 package com.mycompany.tweet.audit.config;
-
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class CriteriaLoader {
 
-    public static String loadCriteria(){
-        Path filePath  = Path.of("resources/criteria.txt");
+    public static String loadCriteria(String pathFile) throws Exception {
+        Path filePath  = Path.of( pathFile);
 
-        String content = "";
-        try {
-            content = Files.readString(filePath);
-        } catch (IOException e) {
-//            throw new RuntimeException(e);
-            System.err.println("Error reading file: " + e.getMessage());
+        String content = Files.readString(filePath);
+
+
+        if (content.isBlank()){
+            throw new Exception("Criteria file exists but is empty: " + filePath);
         }
 
         return content;

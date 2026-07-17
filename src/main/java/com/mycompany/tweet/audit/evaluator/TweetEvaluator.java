@@ -13,7 +13,8 @@ public class TweetEvaluator {
     public static void evaluateAll(List<Tweet> tweets, String criteria, String geminiModel, String apiKey, String myUsername, int batchSize) throws Exception {
 
         // Load the checkpoint and slice the list before we do any batching
-        String lastProcessedId = CheckpointManager.loadCheckpoint();
+//        String lastProcessedId = CheckpointManager.loadCheckpoint();
+        String lastProcessedId = CheckpointManager.loadCheckpoint("output/checkpoint.txt");
         tweets = CheckpointManager.applyCheckpoint(tweets, lastProcessedId);
 
         if (tweets.isEmpty()) {
@@ -68,11 +69,12 @@ public class TweetEvaluator {
             // Auto-save the results to CSV after each batch is processed. This ensures that even if the program is interrupted, progress is saved.
             try {
                 System.out.println("Auto-saving progress to CSV...");
-                ResultsWriter.writeToCsv(results, myUsername);
+                ResultsWriter.writeToCsv(results, myUsername, "output/output.csv");
 
                 Tweet lastTweetInBatch = batch.getLast();
 
-                CheckpointManager.saveCheckpoint(lastTweetInBatch.id());
+//                CheckpointManager.saveCheckpoint(lastTweetInBatch.id());
+                CheckpointManager.saveCheckpoint(lastTweetInBatch.id(), "output/checkpoint.txt");
                 System.out.println("Checkpoint Saved: " + lastTweetInBatch.id());
 
             } catch (Exception e) {
@@ -88,8 +90,6 @@ public class TweetEvaluator {
                 System.err.println("Sleep interrupted: " + e.getMessage());
                 return;
             }
-            break;
         }
-
     }
 }

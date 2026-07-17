@@ -20,7 +20,7 @@ public class ArchiveParser {
         int index = tweetsJson.indexOf("[");
 
         if (index == -1){
-            throw new Exception("Invalid JSON format: No array found");
+            throw new Exception("Invalid JSON format: No array found                        ");
         }
 
         String tweetsArrayJson = tweetsJson.substring(index);

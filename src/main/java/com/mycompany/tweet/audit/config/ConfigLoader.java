@@ -4,8 +4,12 @@ import com.mycompany.tweet.audit.model.Config;
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class ConfigLoader {
-    public static Config load() throws Exception {
-            Dotenv dotenv = Dotenv.load();
+    public static Config load(String envFilePath) throws Exception {
+            Dotenv dotenv = Dotenv.configure()
+                    .directory(".")
+                    .filename(envFilePath)
+                    .load();
+
             String apiKey = dotenv.get("GEMINI_API_KEY");
             String myUsername = dotenv.get("X_USERNAME");
             String geminiModel = dotenv.get("GEMINI_MODEL");

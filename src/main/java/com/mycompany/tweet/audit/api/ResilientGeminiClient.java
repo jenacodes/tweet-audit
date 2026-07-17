@@ -35,7 +35,7 @@ public class ResilientGeminiClient {
                 }
 
                 if (statusCode >= 400 && statusCode < 500) {
-                    throw new Exception("Gemini API error " + statusCode + ": " + response.body());
+                    throw new IllegalArgumentException("Gemini API error " + statusCode + ": " + response.body());
                 }
 
                 if (statusCode >= 500) {
@@ -67,12 +67,12 @@ public class ResilientGeminiClient {
             } catch (InterruptedException e) {
                 //Thread.sleep was interrupted - don't retry, fail
                 throw new Exception("Interrupted while waiting for retry: " + e.getMessage());
-            } catch (Exception e) {
 
-                if (e.getMessage() != null && e.getMessage().contains("Gemini API returned an error: ")){
-                    //Client error - don't retry
-                    throw new Exception("Fatal Gemini API error: " + e.getMessage());
-                }
+            }catch (IllegalArgumentException e){
+                // 400/403 errors — don't retry, throw immediately
+                throw new Exception(e.getMessage());
+            }catch (Exception e) {
+
                 //Network error or JSON parsing error - retry with backoff
                 System.err.println("Error on attempt " + attempt + ": " + e.getMessage());
 

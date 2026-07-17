@@ -8,9 +8,9 @@ import java.nio.file.Path;
 import java.util.List;
 
 public class CheckpointManager {
-    public static String loadCheckpoint(){
+    public static String loadCheckpoint(String fileName){
 
-        String fileName = "output/checkpoint.txt";
+//        String fileName = "output/checkpoint.txt";
         Path path = Path.of(fileName);
         if (Files.exists(path)){
             //read the file and return the last processed tweet id
@@ -23,8 +23,8 @@ public class CheckpointManager {
         return null;
     }
 
-    public static void saveCheckpoint(String tweetId) throws IOException {
-        String fileName = "output/checkpoint.txt";
+    public static void saveCheckpoint(String tweetId, String fileName) throws IOException {
+//        String fileName = "output/checkpoint.txt";
         try {
             // Create the output directory if it doesn't exist
             Files.createDirectories(Path.of("output"));
