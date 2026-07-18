@@ -6,7 +6,7 @@ A lightweight, local Java CLI application that audits your historical Twitter/X 
 
 ## Key Features
 
-- **Local Archive Parsing**: Parses your `real_tweets.json` or standard Twitter archive format, removing JS prefixes automatically.
+- **Local Archive Parsing**: Parses your `data/tweets.json` or standard Twitter archive format, removing JS prefixes automatically.
 - **Customizable Alignment Criteria**: Define your auditing rules in a simple text file (`resources/criteria.txt`).
 - **Resilient AI Auditing**: Leverages Gemini models (e.g., `gemini-2.5-flash`) via the Gemini Developer API with robust error handling and **exponential backoff retries** for rate limits (429) and server errors.
 - **Automatic Checkpointing**: Saves progress to `output/checkpoint.txt` after every batch. If the process is stopped or crashes, it resumes exactly where it left off, avoiding duplicate API calls and charges.
@@ -22,7 +22,7 @@ The following diagram illustrates how the components of the Tweet Audit Tool int
 ```mermaid
 graph TD
     %% Data Inputs
-    JsonFile[real_tweets.json] --> Parser[ArchiveParser]
+    JsonFile[data/tweets.json] --> Parser[ArchiveParser]
     CriteriaFile[resources/criteria.txt] --> Loader[CriteriaLoader]
 
     %% Processing Flow
