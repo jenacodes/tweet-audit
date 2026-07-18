@@ -1,0 +1,4 @@
+Flag tweets that:
+- Unprofessional language
+- Hate speech
+- Negative competitor mentions

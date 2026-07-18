@@ -28,7 +28,11 @@ public class TweetEvaluator {
         for (List<Tweet> batch : batches) {
             //create new stringBuilder object to construct prompt text
             StringBuilder sb = new StringBuilder();
+            sb.append("You are evaluating tweets for professional appropriateness.\n");
+            sb.append("Flag tweets that:\n");
             sb.append(criteria);
+            sb.append("\nRespond ONLY with a valid JSON array containing 'id', 'tweet' and reason.\n");
+            sb.append("\n The Reason should not be more than 15 words.\n");
 
             //Loop through each tweet in the batch and append its ID and full text to the prompt
             for (Tweet tweet : batch) {

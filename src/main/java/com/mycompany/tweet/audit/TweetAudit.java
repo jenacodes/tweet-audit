@@ -17,7 +17,7 @@ public class TweetAudit {
 
         //Load config
         try {
-            config = ConfigLoader.load();
+            config = ConfigLoader.load(".env");
         } catch (Exception e) {
             System.err.println("Configuration error: " + e.getMessage());
             return;
@@ -25,7 +25,7 @@ public class TweetAudit {
 
         //Load criteria
         try {
-            criteria = CriteriaLoader.loadCriteria();
+            criteria = CriteriaLoader.loadCriteria("resources/criteria.txt");
         } catch (Exception e) {
             System.err.println("Criteria loading Error: " + e.getMessage());
             return;
@@ -33,7 +33,7 @@ public class TweetAudit {
 
         //Parse archive
         try {
-            tweets = ArchiveParser.parse("real_tweets.json");
+            tweets = ArchiveParser.parse("data/tweets.json");
         } catch (Exception e) {
             System.err.println("Archive parsing error: "+ e.getMessage());
             return;
