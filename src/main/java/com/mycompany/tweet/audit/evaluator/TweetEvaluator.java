@@ -10,11 +10,10 @@ import java.util.List;
 public class TweetEvaluator {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static void evaluateAll(List<Tweet> tweets, String criteria, String geminiModel, String apiKey, String myUsername, int batchSize) throws Exception {
+    public static void evaluateAll(List<Tweet> tweets, String criteria, String geminiModel, String apiKey, String myUsername, int batchSize, String checkpointPath, String outputPath) throws Exception {
 
         // Load the checkpoint and slice the list before we do any batching
-//        String lastProcessedId = CheckpointManager.loadCheckpoint();
-        String lastProcessedId = CheckpointManager.loadCheckpoint("output/checkpoint.txt");
+        String lastProcessedId = CheckpointManager.loadCheckpoint(checkpointPath);
         tweets = CheckpointManager.applyCheckpoint(tweets, lastProcessedId);
 
         if (tweets.isEmpty()) {
@@ -50,7 +49,7 @@ public class TweetEvaluator {
             //Serialize to JSON
             String jsonString = objectMapper.writeValueAsString(geminiRequest);
 
-
+            //Send the request to Gemini and get the results
             List<AuditResult> results;
 
             try{
@@ -73,12 +72,12 @@ public class TweetEvaluator {
             // Auto-save the results to CSV after each batch is processed. This ensures that even if the program is interrupted, progress is saved.
             try {
                 System.out.println("Auto-saving progress to CSV...");
-                ResultsWriter.writeToCsv(results, myUsername, "output/output.csv");
+                ResultsWriter.writeToCsv(results, myUsername, outputPath);
 
                 Tweet lastTweetInBatch = batch.getLast();
 
-//                CheckpointManager.saveCheckpoint(lastTweetInBatch.id());
-                CheckpointManager.saveCheckpoint(lastTweetInBatch.id(), "output/checkpoint.txt");
+
+                CheckpointManager.saveCheckpoint(lastTweetInBatch.id(), checkpointPath);
                 System.out.println("Checkpoint Saved: " + lastTweetInBatch.id());
 
             } catch (Exception e) {

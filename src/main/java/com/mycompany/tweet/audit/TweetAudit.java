@@ -48,7 +48,7 @@ public class TweetAudit {
 
         //Evaluate
         try {
-            TweetEvaluator.evaluateAll(tweets, criteria, config.geminiModel(), config.apiKey(), config.myUsername(), config.batchSize());
+            TweetEvaluator.evaluateAll(tweets, criteria, config.geminiModel(), config.apiKey(), config.myUsername(), config.batchSize(), "output/checkpoint.txt", "output/output.csv");
         } catch (Exception e) {
             System.err.println("Evaluation error: " + e.getMessage());
         }
