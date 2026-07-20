@@ -1,4 +1,4 @@
-package com.mycompany.tweet.audit.utility;
+package com.mycompany.tweet.audit;
 
 import java.util.ArrayList;
 import java.util.List;
